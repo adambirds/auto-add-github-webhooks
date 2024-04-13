@@ -13,30 +13,50 @@ class GitHubAPIClient:
             "Authorization": f"Bearer {self.token}",
         }
     
-    def execute_api_call(self, method: str, endpoint: str, data: dict = None) -> dict:
-        
+    def execute_api_call(self, method: str, endpoint: str, params: dict = None, data: dict = None) -> dict:
         url = f"{self.base_api_url}/{endpoint}"
         
-        if data is None:
-            response = requests.request(method, url, headers=self.headers)
+        if method == "GET" and params:
+            response = requests.get(url, headers=self.headers, params=params)
+        elif data:
+            response = requests.post(url, headers=self.headers, json=data)
         else:
-            response = requests.request(method, url, headers=self.headers, json=data)
+            response = requests.request(method, url, headers=self.headers)
         
-        if response.status_code == 200 or response.status_code == 201:
+        if response.status_code in (200, 201):
             return response.json()
         elif response.status_code == 204:
             return {}
         else:
             raise Exception(f"Failed to execute API call: {response.text}")
     
+    def fetch_all(self, method: str, endpoint: str, params: dict = None) -> list:
+        items = []
+        page = 1
+        while True:
+            if params:
+                params.update({'page': page})
+            else:
+                params = {'page': page, 'per_page': 100}  # Default per_page set to 100
+            
+            response = self.execute_api_call(method, endpoint, params=params)
+            items.extend(response)  # Assuming response is a list of items
+            
+            # Break if there are no more items in the response
+            if not response or len(response) < params['per_page']:
+                break
+            page += 1
+        
+        return items
+    
     def get_org_repos(self, organisation: str) -> dict:
-        return self.execute_api_call("GET", f"orgs/{organisation}/repos")
+        return self.fetch_all("GET", f"orgs/{organisation}/repos")
     
     def get_user_repos(self, user: str) -> dict:
-        return self.execute_api_call("GET", f"users/{user}/repos")
+        return self.fetch_all("GET", f"users/{user}/repos")
     
     def list_webhooks(self, owner: str, repo: str) -> dict:
-        return self.execute_api_call("GET", f"repos/{owner}/{repo}/hooks")
+        return self.fetch_all("GET", f"repos/{owner}/{repo}/hooks")
     
     def create_webhook(self, owner: str, repo: str, webhook_url: str) -> dict:
         logger.info(f"Creating webhook for {owner}/{repo}")
@@ -51,7 +71,7 @@ class GitHubAPIClient:
             },
         }
         
-        return self.execute_api_call("POST", f"repos/{owner}/{repo}/hooks", data)
+        return self.execute_api_call("POST", f"repos/{owner}/{repo}/hooks", data=data)
     
     def delete_webhook(self, owner: str, repo: str, webhook_id: int) -> dict:
         logger.info(f"Deleting webhook {webhook_id} from {owner}/{repo}")
