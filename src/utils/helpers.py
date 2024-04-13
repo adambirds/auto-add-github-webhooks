@@ -64,5 +64,5 @@ def send_completion_notifications(conf_options: Dict[str, Any]) -> None:
         send_completion_teams_message(conf_options)
     if "ZulipAPI" in conf_options["APP"]["NOTIFICATIONS"]:
         send_completion_zulip_message(conf_options)
-    if "Zabbix" in conf_options["APP"]["NOTIFICATIONS"]:
+    if "Zabbix" in conf_options["APP"]["SCRIPT_MONITORING"]:
         send_zabbix_script_monitoring(0, conf_options)
