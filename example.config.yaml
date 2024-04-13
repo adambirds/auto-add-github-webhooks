@@ -1,0 +1,36 @@
+APP:
+  DEBUG: false
+  GITHUB_API_BASE_URL: "https://api.github.com/"
+  WEBHOOKS_URLS_TO_ADD:
+    - ""
+  ORGANISATIONS: [
+    {
+      name: "testorg",
+      token: ""
+    }
+  ]
+  USERS: [
+    {
+      name: "testuser",
+      token: ""
+    }
+  ]
+  NOTIFICATIONS:
+    #- "ZulipAPI"
+    - "Discord"
+    #- "Slack"
+    #- "Teams"
+  SCRIPT_MONITORING:
+    #- 'Zabbix'
+  ZABBIX_CONFIG_FILE: "/etc/zabbix/zabbix_agent2.conf"
+  ZABBIX_METRIC: "cron.auto-add-github-webhook"
+  DISCORD_WEBHOOK: ""
+  DISCORD_WEBHOOK_COMPLETION: ""
+  DISCORD_WEBHOOK_ERROR: ""
+  SERVER_NAME: ""
+  SLACK_WEBHOOK: ""
+  SLACK_WEBHOOK_ERROR: ""
+  SLACK_WEBHOOK_COMPLETION: ""
+  TEAMS_WEBHOOK: ""
+  TEAMS_WEBHOOK_ERROR: ""
+  TEAMS_WEBHOOK_COMPLETION: ""
