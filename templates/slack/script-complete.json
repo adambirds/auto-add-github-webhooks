@@ -1,0 +1,14 @@
+{
+    "blocks": [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "The Auto Add GitHub Webhook script has completed successfully."
+            }
+        },
+        {
+            "type": "divider"
+        }
+    ]
+}
