@@ -79,11 +79,17 @@ def main() -> None:
     
     for organisation in conf_options["APP"]["ORGANISATIONS"]:
         process_org_repos(organisation["name"], organisation["token"], conf_options)
+
+        logger.info(f"Succesfully processed organisation: {organisation['name']}")
     
     for user in conf_options["APP"]["USERS"]:
         process_user_repos(user["name"], user["token"], conf_options)
 
+        logger.info(f"Succesfully processed user: {user['name']}")
+
     send_completion_notifications(conf_options)
+
+    logger.info("Script completed successfully")
 
 
 if __name__ == "__main__":
