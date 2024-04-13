@@ -36,8 +36,12 @@ def process_org_repos(organisation: str, api_token: str, conf_options: Dict[str,
             # Delete any webhooks that are not in the list of webhooks to add.
             for webhook in webhooks:
                 if webhook["config"]["url"] not in webhooks_urls_to_add:
+                    logger.info(f"Webhook URL: {webhook['config']['url']}")
+
                     client.delete_webhook(organisation, repo["name"], webhook["id"])
                     logger.info(f"Webhook deleted from {organisation}/{repo['name']}")
+                else:
+                    logger.info(f"Webhook already exists in {organisation}/{repo['name']}")
 
 
 def process_user_repos(user: str, api_token: str, conf_options: Dict[str, Any]) -> None:
@@ -64,6 +68,8 @@ def process_user_repos(user: str, api_token: str, conf_options: Dict[str, Any]) 
             # Delete any webhooks that are not in the list of webhooks to add.
             for webhook in webhooks:
                 if webhook["config"]["url"] not in webhooks_urls_to_add:
+                    logger.info(f"Webhook URL: {webhook['config']['url']}")
+
                     client.delete_webhook(user, repo["name"], webhook["id"])
                     logger.info(f"Webhook deleted from {user}/{repo['name']}")
                 else:
