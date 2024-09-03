@@ -18,7 +18,12 @@ def process_org_repos(organisation: str, api_token: str, conf_options: Dict[str,
         conf_options["APP"]["GITHUB_API_BASE_URL"],
     )
 
-    webhooks_urls_to_add: List[str] = conf_options["APP"]["WEBHOOKS_URLS_TO_ADD"]
+    # Fetch organization-specific webhooks if provided, else just use the global ones
+    org_conf = next((org for org in conf_options["APP"]["ORGANISATIONS"] if org["name"] == organisation), {})
+    org_specific_webhooks: List[Dict[str, Any]] = org_conf.get("webhooks_to_add", [])
+    
+    # Combine global webhooks with organization-specific webhooks
+    webhooks_to_add: List[Dict[str, Any]] = conf_options["APP"]["WEBHOOKS_URLS_TO_ADD"] + org_specific_webhooks
 
     repos = client.get_org_repos(organisation)
 
@@ -26,23 +31,25 @@ def process_org_repos(organisation: str, api_token: str, conf_options: Dict[str,
         webhooks = client.list_webhooks(organisation, repo["name"])
         logger.debug(f"Webhooks for {organisation}/{repo['name']}: {webhooks}")
 
-        if not any(
-            webhook["config"]["url"] in webhooks_urls_to_add for webhook in webhooks
-        ):
-            for webhook_url in webhooks_urls_to_add:
-                client.create_webhook(organisation, repo["name"], webhook_url)
+        for webhook_data in webhooks_to_add:
+            webhook_url = webhook_data["url"]
+            events = webhook_data["events"]
+
+            if not any(
+                webhook["config"]["url"] == webhook_url for webhook in webhooks
+            ):
+                client.create_webhook(organisation, repo["name"], webhook_url, events)
                 logger.info(f"Webhook added to {organisation}/{repo['name']}")
-        else:
-            # Delete any webhooks that are not in the list of webhooks to add.
-            for webhook in webhooks:
-                if webhook["config"]["url"] not in webhooks_urls_to_add:
-                    logger.info(f"Webhook URL: {webhook['config']['url']}")
+            else:
+                # Delete any webhooks that are not in the list of webhooks to add.
+                for webhook in webhooks:
+                    if webhook["config"]["url"] not in [w["url"] for w in webhooks_to_add]:
+                        logger.info(f"Webhook URL: {webhook['config']['url']}")
 
-                    client.delete_webhook(organisation, repo["name"], webhook["id"])
-                    logger.info(f"Webhook deleted from {organisation}/{repo['name']}")
-                else:
-                    logger.info(f"Webhook already exists in {organisation}/{repo['name']}")
-
+                        client.delete_webhook(organisation, repo["name"], webhook["id"])
+                        logger.info(f"Webhook deleted from {organisation}/{repo['name']}")
+                    else:
+                        logger.info(f"Webhook already exists in {organisation}/{repo['name']}")
 
 def process_user_repos(user: str, api_token: str, conf_options: Dict[str, Any]) -> None:
     client = GitHubAPIClient(
@@ -50,7 +57,7 @@ def process_user_repos(user: str, api_token: str, conf_options: Dict[str, Any]) 
         conf_options["APP"]["GITHUB_API_BASE_URL"],
     )
 
-    webhooks_urls_to_add: List[str] = conf_options["APP"]["WEBHOOKS_URLS_TO_ADD"]
+    webhooks_to_add: List[Dict[str, Any]] = conf_options["APP"]["WEBHOOKS_URLS_TO_ADD"]
 
     repos = client.get_user_repos(user)
 
@@ -58,22 +65,25 @@ def process_user_repos(user: str, api_token: str, conf_options: Dict[str, Any]) 
         webhooks = client.list_webhooks(user, repo["name"])
         logger.debug(f"Webhooks for {user}/{repo['name']}: {webhooks}")
 
-        if not any(
-            webhook["config"]["url"] in webhooks_urls_to_add for webhook in webhooks
-        ):
-            for webhook_url in webhooks_urls_to_add:
-                client.create_webhook(user, repo["name"], webhook_url)
-                logger.info(f"Webhook added to {user}/{repo['name']}")
-        else:
-            # Delete any webhooks that are not in the list of webhooks to add.
-            for webhook in webhooks:
-                if webhook["config"]["url"] not in webhooks_urls_to_add:
-                    logger.info(f"Webhook URL: {webhook['config']['url']}")
+        for webhook_data in webhooks_to_add:
+            webhook_url = webhook_data["url"]
+            events = webhook_data["events"]
 
-                    client.delete_webhook(user, repo["name"], webhook["id"])
-                    logger.info(f"Webhook deleted from {user}/{repo['name']}")
-                else:
-                    logger.info(f"Webhook already exists in {user}/{repo['name']}")
+            if not any(
+                webhook["config"]["url"] == webhook_url for webhook in webhooks
+            ):
+                client.create_webhook(user, repo["name"], webhook_url, events)
+                logger.info(f"Webhook added to {user}/{repo['name']}")
+            else:
+                # Delete any webhooks that are not in the list of webhooks to add.
+                for webhook in webhooks:
+                    if webhook["config"]["url"] not in [w["url"] for w in webhooks_to_add]:
+                        logger.info(f"Webhook URL: {webhook['config']['url']}")
+
+                        client.delete_webhook(user, repo["name"], webhook["id"])
+                        logger.info(f"Webhook deleted from {user}/{repo['name']}")
+                    else:
+                        logger.info(f"Webhook already exists in {user}/{repo['name']}")
 
 def main() -> None:
     conf_options = process_config_file()

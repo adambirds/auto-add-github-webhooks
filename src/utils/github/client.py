@@ -58,13 +58,13 @@ class GitHubAPIClient:
     def list_webhooks(self, owner: str, repo: str) -> dict:
         return self.fetch_all("GET", f"repos/{owner}/{repo}/hooks")
     
-    def create_webhook(self, owner: str, repo: str, webhook_url: str) -> dict:
+    def create_webhook(self, owner: str, repo: str, webhook_url: str, events: list = ["push"]) -> dict:
         logger.info(f"Creating webhook for {owner}/{repo}")
 
         data = {
             "name": "web",
             "active": True,
-            "events": ["push"],
+            "events": events,
             "config": {
                 "url": webhook_url,
                 "content_type": "json",
